@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bug-web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: bug-web
+  template:
+    metadata:
+      labels:
+        app: bug-web
+    spec:
+      containers:
+      - name: bug-web
+        image: YOUR_DOCKER_IMAGE:latest
+        ports:
+        - containerPort: 5000
+
+        env:
+        - name: OLLAMA_HOST
+          value: "http://ollama:11434"
+
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        
+        startupProbe:
+          httpGet:
+            path: /
+            port: 5000
+          failureThreshold: 30
+          periodSeconds: 5
