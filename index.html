@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐛 Bug Guessing Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green:       #4caf7d;
+    --green-light: #d4f5e2;
+    --green-dark:  #2e7d52;
+    --cream:       #fdf9f0;
+    --bark:        #5c3d2e;
+    --bark-light:  #8b6347;
+    --gold:        #f5c842;
+    --red:         #e05c5c;
+    --shadow:      0 4px 20px rgba(46,125,82,0.15);
+    --radius:      16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--cream);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 60px;
+    background-image:
+      radial-gradient(circle at 10% 20%, #c8f0d8 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, #d4f5e2 0%, transparent 40%);
+  }
+
+  /* ── Header ── */
+  header {
+    text-align: center;
+    margin-bottom: 28px;
+    animation: fadeDown .5s ease both;
+  }
+  header h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.8rem;
+    color: var(--green-dark);
+    letter-spacing: 1px;
+  }
+  header p {
+    color: var(--bark-light);
+    font-size: .95rem;
+    margin-top: 4px;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px;
+    width: 100%;
+    max-width: 620px;
+    margin-bottom: 20px;
+    animation: fadeUp .45s ease both;
+  }
+
+  /* ── Toolbar ── */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .toolbar label {
+    font-weight: 700;
+    color: var(--bark);
+    font-size: .9rem;
+  }
+  select {
+    font-family: 'Nunito', sans-serif;
+    font-size: .9rem;
+    font-weight: 700;
+    border: 2px solid var(--green);
+    border-radius: 8px;
+    padding: 6px 10px;
+    background: var(--green-light);
+    color: var(--green-dark);
+    cursor: pointer;
+    outline: none;
+  }
+  .btn {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: .9rem;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 18px;
+    cursor: pointer;
+    transition: transform .1s, box-shadow .1s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn-green {
+    background: var(--green);
+    color: #fff;
+    box-shadow: 0 3px 0 var(--green-dark);
+  }
+  .btn-green:hover { background: var(--green-dark); }
+  .btn-bark {
+    background: var(--bark-light);
+    color: #fff;
+    box-shadow: 0 3px 0 var(--bark);
+  }
+  .btn-bark:hover { background: var(--bark); }
+
+  /* ── Stats bar ── */
+  .stats {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .stat-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--green-light);
+    border-radius: 999px;
+    padding: 6px 16px;
+    font-weight: 700;
+    color: var(--green-dark);
+    font-size: .95rem;
+    flex: 1;
+    justify-content: center;
+    min-width: 120px;
+  }
+  .stat-pill span.icon { font-size: 1.1rem; }
+
+  /* ── Bug image area ── */
+  .bug-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    min-height: 160px;
+    justify-content: center;
+  }
+  #bugImage {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid var(--green);
+    box-shadow: 0 4px 16px rgba(76,175,125,.25);
+    display: none;
+    transition: opacity .4s;
+  }
+  #bugImage.visible { display: block; animation: popIn .4s ease both; }
+  .bug-placeholder {
+    font-size: 5rem;
+    filter: grayscale(0);
+    animation: float 3s ease-in-out infinite;
+  }
+  #revealBanner {
+    display: none;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    color: var(--bark);
+    text-align: center;
+  }
+
+  /* ── Chat ── */
+  #chat {
+    max-height: 320px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-right: 4px;
+  }
+  #chat::-webkit-scrollbar { width: 6px; }
+  #chat::-webkit-scrollbar-thumb { background: var(--green-light); border-radius: 3px; }
+
+  .msg {
+    display: flex;
+    flex-direction: column;
+    max-width: 85%;
+    animation: fadeUp .25s ease both;
+  }
+  .msg.user { align-self: flex-end; align-items: flex-end; }
+  .msg.bot  { align-self: flex-start; align-items: flex-start; }
+
+  .msg .label {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-bottom: 3px;
+    color: var(--bark-light);
+  }
+  .msg .bubble {
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: .95rem;
+    line-height: 1.45;
+  }
+  .msg.user .bubble {
+    background: var(--green-dark);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .msg.bot .bubble {
+    background: var(--green-light);
+    color: var(--bark);
+    border-bottom-left-radius: 4px;
+  }
+  .msg.bot .bubble.correct {
+    background: var(--gold);
+    color: var(--bark);
+    font-weight: 700;
+  }
+  .msg.bot .bubble.wrong {
+    background: #fde8e8;
+    color: var(--red);
+  }
+
+  /* ── Empty state ── */
+  #emptyChat {
+    text-align: center;
+    color: #aaa;
+    font-size: .9rem;
+    padding: 20px 0;
+  }
+
+  /* ── Input row ── */
+  .input-row {
+    display: flex;
+    gap: 10px;
+  }
+  #questionInput {
+    flex: 1;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    border: 2px solid #ddd;
+    border-radius: 12px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color .2s;
+    background: var(--cream);
+  }
+  #questionInput:focus { border-color: var(--green); }
+  #questionInput:disabled { opacity: .6; }
+
+  /* ── Thinking indicator ── */
+  #thinkingRow {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    color: var(--green-dark);
+    font-size: .88rem;
+    font-weight: 600;
+  }
+  .dot-flashing {
+    display: flex; gap: 4px;
+  }
+  .dot-flashing span {
+    width: 7px; height: 7px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: dotBounce 1s infinite ease-in-out;
+  }
+  .dot-flashing span:nth-child(2) { animation-delay: .2s; }
+  .dot-flashing span:nth-child(3) { animation-delay: .4s; }
+
+  /* ── Status banner ── */
+  #statusBanner {
+    display: none;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-weight: 700;
+    font-size: .95rem;
+    text-align: center;
+  }
+  #statusBanner.info  { background: var(--green-light); color: var(--green-dark); }
+  #statusBanner.error { background: #fde8e8; color: var(--red); }
+
+  /* ── Progress bugs ── */
+  .bug-progress {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .bug-pip {
+    font-size: 1.5rem;
+    filter: grayscale(1) opacity(.35);
+    transition: filter .4s;
+  }
+  .bug-pip.alive  { filter: none; }
+  .bug-pip.popped { animation: popOut .3s ease forwards; }
+
+  /* ── Overlay ── */
+  #overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  #overlay.show { display: flex; }
+  .overlay-box {
+    background: #fff;
+    border-radius: 20px;
+    padding: 40px 32px;
+    text-align: center;
+    max-width: 360px;
+    width: 90%;
+    animation: popIn .3s ease both;
+    box-shadow: 0 20px 60px rgba(0,0,0,.2);
+  }
+  .overlay-box h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2rem;
+    color: var(--green-dark);
+    margin-bottom: 10px;
+  }
+  .overlay-box p {
+    color: var(--bark-light);
+    margin-bottom: 24px;
+    font-size: 1rem;
+  }
+  .overlay-box .final-score {
+    font-family: 'Fredoka One', cursive;
+    font-size: 3rem;
+    color: var(--gold);
+    margin-bottom: 20px;
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeDown {
+    from { opacity:0; transform: translateY(-18px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity:0; transform: translateY(12px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+  @keyframes popIn {
+    from { opacity:0; transform: scale(.8); }
+    to   { opacity:1; transform: scale(1); }
+  }
+  @keyframes popOut {
+    to { opacity:0; transform: scale(1.5); }
+  }
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(-10px); }
+  }
+  @keyframes dotBounce {
+    0%,80%,100% { transform: scale(.7); opacity:.5; }
+    40%          { transform: scale(1);   opacity:1; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🐛 Guess the Bug!</h1>
+  <p>Ask yes/no questions to uncover the secret insect.</p>
+</header>
+
+<!-- Toolbar card -->
+<div class="card" style="animation-delay:.05s">
+  <div class="toolbar">
+    <label for="diffSelect">Difficulty:</label>
+    <select id="diffSelect" onchange="setDifficulty(this.value)">
+      <option value="easy">😄 Easy (20 questions)</option>
+      <option value="hard">😈 Hard (10 questions)</option>
+    </select>
+    <button class="btn btn-bark" onclick="restartGame()" style="margin-left:auto">🔄 New Game</button>
+  </div>
+</div>
+
+<!-- Stats card -->
+<div class="card" style="animation-delay:.1s">
+  <div class="stats">
+    <div class="stat-pill"><span class="icon">❓</span> <span id="questionsLeft">20</span> questions left</div>
+    <div class="stat-pill"><span class="icon">🐛</span> <span id="bugsLeft">5</span> bugs left</div>
+    <div class="stat-pill"><span class="icon">⭐</span> Score: <span id="scoreDisplay">0</span></div>
+  </div>
+</div>
+
+<!-- Bug image card -->
+<div class="card" style="animation-delay:.15s">
+  <div class="bug-stage">
+    <div class="bug-placeholder" id="bugPlaceholder">🔍</div>
+    <img id="bugImage" alt="Bug revealed" />
+    <div id="revealBanner"></div>
+  </div>
+  <div class="bug-progress" id="bugProgress"></div>
+</div>
+
+<!-- Chat card -->
+<div class="card" style="animation-delay:.2s">
+  <div id="statusBanner"></div>
+  <div id="chat">
+    <div id="emptyChat">Ask your first question to begin!</div>
+  </div>
+  <div id="thinkingRow" style="margin-top:10px">
+    <div class="dot-flashing"><span></span><span></span><span></span></div>
+    The bug is thinking…
+  </div>
+</div>
+
+<!-- Input card -->
+<div class="card" style="animation-delay:.25s">
+  <div class="input-row">
+    <input id="questionInput" type="text" placeholder="e.g. Does it have wings?" autocomplete="off"
+           onkeydown="handleKey(event)" />
+    <button id="askBtn" class="btn btn-green" onclick="ask()">Ask →</button>
+  </div>
+</div>
+
+<!-- Game Over overlay -->
+<div id="overlay">
+  <div class="overlay-box">
+    <h2 id="overlayTitle">🎉 You did it!</h2>
+    <div class="final-score" id="overlayScore"></div>
+    <p id="overlayMsg"></p>
+    <button class="btn btn-green" style="width:100%;padding:14px" onclick="restartGame()">Play Again 🐛</button>
+  </div>
+</div>
+
+<audio id="correctSound" preload="auto">
+  <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=" />
+</audio>
+<audio id="wrongSound" preload="auto">
+  <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=" />
+</audio>
+
+<script>
+// ── State ──────────────────────────────────────────────
+let questionsLeft = 20;
+let bugsLeft = 5;
+let score = 0;
+let totalBugs = 5;
+let isThinking = false;
+
+// ── Boot ───────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  await checkStatus();
+  await syncState();
+  renderBugPips();
+});
+
+async function checkStatus() {
+  try {
+    const res = await fetch('/api/status');
+    const data = await res.json();
+    if (!data.ok) {
+      showBanner(
+        "⚠️ Ollama not ready. Run: <code>ollama pull llama3.2</code> then refresh.",
+        "error"
+      );
+      setInputDisabled(true);
+    }
+  } catch {
+    showBanner("⚠️ Cannot reach the server. Make sure app.py is running.", "error");
+    setInputDisabled(true);
+  }
+}
+
+async function syncState() {
+  try {
+    const res = await fetch('/api/state');
+    const data = await res.json();
+    questionsLeft = data.questions_left;
+    bugsLeft = data.bugs_remaining;
+    score = data.score;
+    totalBugs = bugsLeft + data.bugs_guessed;
+    updateStats();
+  } catch {}
+}
+
+// ── Gameplay ───────────────────────────────────────────
+function handleKey(e) {
+  if (e.key === 'Enter') { e.preventDefault(); ask(); }
+}
+
+async function ask() {
+  if (isThinking) return;
+  const input = document.getElementById('questionInput');
+  const q = input.value.trim();
+  if (!q) return;
+
+  input.value = '';
+  appendMessage('user', q);
+  removePlaceholder();
+  setThinking(true);
+
+  try {
+    const res = await fetch('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q })
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      appendMessage('bot', '⚠️ ' + data.error, 'wrong');
+      setThinking(false);
+      return;
+    }
+
+    questionsLeft = data.questions_left;
+    bugsLeft = data.bugs_remaining;
+    score = data.score;
+    updateStats();
+
+    let bubbleClass = '';
+    if (data.guessed)           bubbleClass = 'correct';
+    if (data.out_of_questions)  bubbleClass = 'wrong';
+
+    appendMessage('bot', data.response, bubbleClass);
+
+    // Show bug image on reveal
+    if (data.bug_image) showBugImage(data.bug_image);
+
+    // Reveal banner (wrong / correct)
+    if (data.out_of_questions && data.revealed_bug) {
+      showRevealBanner(`The bug was: ${data.revealed_bug} 😔`, false);
+      popBugPip();
+      playSound('wrong');
+    }
+    if (data.guessed) {
+      showRevealBanner('🎉 You got it!', true);
+      popBugPip();
+      playSound('correct');
+    }
+
+    if (data.game_over) {
+      setTimeout(() => showGameOver(), 1200);
+    } else if (data.guessed || data.out_of_questions) {
+      // Next bug — reset image after a moment
+      setTimeout(() => {
+        hideBugImage();
+        clearRevealBanner();
+      }, 2400);
+    }
+
+  } catch (err) {
+    appendMessage('bot', '⚠️ Network error. Is the server running?', 'wrong');
+  }
+
+  setThinking(false);
+}
+
+async function setDifficulty(level) {
+  await fetch('/api/set_difficulty', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ difficulty: level })
+  });
+  await restartGame(false); // soft reset, no page reload
+}
+
+async function restartGame(resetSelect = true) {
+  await fetch('/api/restart', { method: 'POST' });
+  await syncState();
+  totalBugs = bugsLeft;
+
+  // Reset chat
+  const chat = document.getElementById('chat');
+  chat.innerHTML = '<div id="emptyChat">Ask your first question to begin!</div>';
+
+  hideBugImage();
+  clearRevealBanner();
+  document.getElementById('bugPlaceholder').style.display = '';
+  renderBugPips();
+  hideBanner();
+  document.getElementById('overlay').classList.remove('show');
+  setInputDisabled(false);
+  document.getElementById('questionInput').focus();
+}
+
+// ── UI helpers ─────────────────────────────────────────
+function appendMessage(who, text, bubbleClass = '') {
+  const chat = document.getElementById('chat');
+  const empty = document.getElementById('emptyChat');
+  if (empty) empty.remove();
+
+  const div = document.createElement('div');
+  div.className = `msg ${who}`;
+  div.innerHTML = `
+    <div class="label">${who === 'user' ? 'You' : '🐛 Bug'}</div>
+    <div class="bubble ${bubbleClass}">${escapeHtml(text)}</div>`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function removePlaceholder() {
+  const e = document.getElementById('emptyChat');
+  if (e) e.remove();
+}
+
+function updateStats() {
+  document.getElementById('questionsLeft').textContent = questionsLeft;
+  document.getElementById('bugsLeft').textContent = bugsLeft;
+  document.getElementById('scoreDisplay').textContent = score;
+}
+
+function setThinking(val) {
+  isThinking = val;
+  document.getElementById('thinkingRow').style.display = val ? 'flex' : 'none';
+  document.getElementById('askBtn').disabled = val;
+  document.getElementById('questionInput').disabled = val;
+  if (!val) document.getElementById('questionInput').focus();
+}
+
+function setInputDisabled(val) {
+  document.getElementById('askBtn').disabled = val;
+  document.getElementById('questionInput').disabled = val;
+}
+
+function showBugImage(src) {
+  const img = document.getElementById('bugImage');
+  document.getElementById('bugPlaceholder').style.display = 'none';
+  img.src = src;
+  img.classList.add('visible');
+}
+
+function hideBugImage() {
+  const img = document.getElementById('bugImage');
+  img.classList.remove('visible');
+  img.src = '';
+  document.getElementById('bugPlaceholder').style.display = '';
+  document.getElementById('bugPlaceholder').textContent = '🔍';
+}
+
+function showRevealBanner(text, success) {
+  const b = document.getElementById('revealBanner');
+  b.textContent = text;
+  b.style.display = 'block';
+  b.style.color = success ? 'var(--green-dark)' : 'var(--red)';
+}
+
+function clearRevealBanner() {
+  const b = document.getElementById('revealBanner');
+  b.style.display = 'none';
+  b.textContent = '';
+}
+
+function showBanner(html, type) {
+  const b = document.getElementById('statusBanner');
+  b.innerHTML = html;
+  b.className = type;
+  b.style.display = 'block';
+}
+
+function hideBanner() {
+  document.getElementById('statusBanner').style.display = 'none';
+}
+
+function showGameOver() {
+  document.getElementById('overlayTitle').textContent = score > 0 ? '🎉 Game Over!' : '😔 Game Over';
+  document.getElementById('overlayScore').textContent = score + ' pts';
+  document.getElementById('overlayMsg').textContent =
+    `You worked through all 5 bugs${score > 50 ? ' — incredible!' : score > 20 ? ' — well done!' : '. Keep practicing!'}`;
+  document.getElementById('overlay').classList.add('show');
+}
+
+// ── Bug progress pips ──────────────────────────────────
+function renderBugPips() {
+  const container = document.getElementById('bugProgress');
+  container.innerHTML = '';
+  const emojis = ['🐛','🦋','🐞','🦗','🐝','🪲','🦟','🐜','🪳','🦂'];
+  for (let i = 0; i < totalBugs; i++) {
+    const pip = document.createElement('span');
+    pip.className = 'bug-pip alive';
+    pip.id = `pip-${i}`;
+    pip.textContent = emojis[i % emojis.length];
+    container.appendChild(pip);
+  }
+}
+
+function popBugPip() {
+  const guessedIndex = totalBugs - bugsLeft - 1;
+  // find the last alive pip
+  const pips = document.querySelectorAll('.bug-pip.alive');
+  if (pips.length) {
+    const pip = pips[pips.length - 1];
+    pip.classList.remove('alive');
+    pip.classList.add('popped');
+  }
+}
+
+// ── Sound (Web Audio fallback since no asset files) ────
+let audioCtx = null;
+
+function playSound(type) {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    if (type === 'correct') {
+      // Quick ascending ding-ding
+      osc.frequency.setValueAtTime(523, audioCtx.currentTime);
+      osc.frequency.setValueAtTime(659, audioCtx.currentTime + 0.12);
+      osc.frequency.setValueAtTime(784, audioCtx.currentTime + 0.24);
+    } else {
+      // Low descending buzz
+      osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+      osc.frequency.setValueAtTime(200, audioCtx.currentTime + 0.15);
+    }
+
+    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.45);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.45);
+  } catch {}
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>

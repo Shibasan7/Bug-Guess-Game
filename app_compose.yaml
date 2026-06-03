@@ -1,0 +1,17 @@
+services:
+  bug-game:
+    image: YOUR_DOCKERHUB_USERNAME/bug-game:latest
+    container_name: bug-game
+    ports:
+      - "5000:5000"
+    volumes:
+      - ollama_data:/root/.ollama  # caches the model between restarts
+    restart: unless-stopped
+
+volumes:
+  ollama_data:
+
+# If Ollama is running locally and don't want to run it in Docker too
+# skip compose and just do:
+# docker build -t bug-game .
+# docker run -p 5000:5000 -e OLLAMA_HOST=http://host.docker.internal:11434 bug-game
