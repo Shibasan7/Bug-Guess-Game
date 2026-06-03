@@ -11,7 +11,7 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev-secret")
 # Config
 # ----------------------------
 
-OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
+OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://ollama:11434")
 client = Client(host=OLLAMA_HOST)
 
 DIFFICULTY = {
