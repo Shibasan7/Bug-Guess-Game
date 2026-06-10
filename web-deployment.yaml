@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: bug-web
-        image: YOUR_DOCKER_IMAGE:latest
+        image: ghcr.io/Shibasan7/bug-guess-game:latest
         ports:
         - containerPort: 5000
 
